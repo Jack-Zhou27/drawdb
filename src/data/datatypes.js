@@ -21,6 +21,22 @@ const binaryRegex = /^[01]+$/;
 
 /* eslint-disable no-unused-vars */
 const defaultTypesBase = {
+  MYPRIMETYPE: {
+    type: "MYPRIMETYPE",
+    color: intColor,
+    checkDefault: (field) => {
+      let value = field.default;
+      if (strHasQuotes(value)) {
+        value = value.slice(1, -1);
+      }
+      const allowedValues = ["1", "3", "5", "7", "9", "11"];
+      return allowedValues.includes(value);
+    },
+    hasCheck: true,
+    isSized: false,
+    hasPrecision: false,
+    canIncrement: false,
+  },
   INT: {
     type: "INT",
     color: intColor,

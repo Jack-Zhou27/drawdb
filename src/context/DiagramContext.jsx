@@ -173,6 +173,62 @@ export default function DiagramContextProvider({ children }) {
     });
   };
 
+  const deleteAllFields = (tid, addToHistory = true) => {
+    const table = tables.find((t) => t.id === tid);
+    if (!table) return;
+
+    const { fields, name } = table;
+
+    if (fields.length === 0) return;
+
+    if (addToHistory) {
+      const rels = relationships.reduce((acc, r) => {
+        const usesStart =
+          r.startTableId === tid &&
+          fields.some((f) => f.id === r.startFieldId);
+        const usesEnd =
+          r.endTableId === tid && fields.some((f) => f.id === r.endFieldId);
+
+        if (usesStart || usesEnd) {
+          acc.push(r);
+        }
+        return acc;
+      }, []);
+
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          action: Action.EDIT,
+          element: ObjectType.TABLE,
+          component: "fields_delete_all",
+          tid,
+          data: {
+            fields,
+            relationships: rels,
+          },
+          message: t("edit_table", {
+            tableName: name,
+            extra: "[delete all fields]",
+          }),
+        },
+      ]);
+      setRedoStack([]);
+    }
+
+    setRelationships((prev) =>
+      prev.filter((r) => {
+        const usesStart =
+          r.startTableId === tid &&
+          fields.some((f) => f.id === r.startFieldId);
+        const usesEnd =
+          r.endTableId === tid && fields.some((f) => f.id === r.endFieldId);
+        return !(usesStart || usesEnd);
+      }),
+    );
+
+    updateTable(tid, { fields: [] });
+  };
+
   const addRelationship = (data, addToHistory = true) => {
     if (addToHistory) {
       setRelationships((prev) => {
@@ -237,6 +293,7 @@ export default function DiagramContextProvider({ children }) {
         updateTable,
         updateField,
         deleteField,
+        deleteAllFields,
         deleteTable,
         relationships,
         setRelationships,
